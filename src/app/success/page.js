@@ -1,11 +1,11 @@
 // SUCCESS PAGE WITH CONFETTI + INVOICE + DELIVERY ETA + WHATSAPP
-// LOGIC UNCHANGED – UI & FEATURES ADDED
-
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Confetti from "react-confetti";
+import Image from "next/image";
 import { CheckCircle, FileDown, MessageCircle } from "lucide-react";
 
 export default function SuccessPage() {
@@ -109,9 +109,15 @@ export default function SuccessPage() {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="border rounded-2xl p-5">
               <h3 className="font-semibold mb-3 text-lg">Customer Details</h3>
-              <p><b>Name:</b> {order.customerName}</p>
-              <p><b>Email:</b> {order.email}</p>
-              <p><b>Phone:</b> {order.phone}</p>
+              <p>
+                <b>Name:</b> {order.customerName}
+              </p>
+              <p>
+                <b>Email:</b> {order.email}
+              </p>
+              <p>
+                <b>Phone:</b> {order.phone}
+              </p>
               <p className="text-sm text-gray-600">
                 <b>Address:</b> {order.address}, {order.city}, {order.country}
               </p>
@@ -119,8 +125,15 @@ export default function SuccessPage() {
 
             <div className="border rounded-2xl p-5">
               <h3 className="font-semibold mb-3 text-lg">Payment Summary</h3>
-              <p><b>Method:</b> {order.paymentMethod === "cod" ? "Cash on Delivery" : "Online (Stripe)"}</p>
-              <p><b>Status:</b> {order.paymentStatus}</p>
+              <p>
+                <b>Method:</b>{" "}
+                {order.paymentMethod === "cod"
+                  ? "Cash on Delivery"
+                  : "Online (Stripe)"}
+              </p>
+              <p>
+                <b>Status:</b> {order.paymentStatus}
+              </p>
               <p className="text-xl font-bold mt-2">PKR {order.totalAmount}</p>
             </div>
           </div>
@@ -130,11 +143,25 @@ export default function SuccessPage() {
             <h3 className="font-semibold text-lg mb-5">Ordered Items</h3>
             <div className="space-y-4">
               {items.map((it, i) => (
-                <div key={i} className="flex flex-col sm:flex-row gap-4 border rounded-2xl p-4">
-                  <img
-                    src={it.image?.startsWith("http") ? it.image : it.image ? `${process.env.NEXT_PUBLIC_SITE_URL}${it.image}` : "/placeholder.png"}
-                    className="w-20 h-20 rounded-xl object-cover"
-                  />
+                <div
+                  key={i}
+                  className="flex flex-col sm:flex-row gap-4 border rounded-2xl p-4"
+                >
+                  <div className="w-20 h-20 relative flex-shrink-0">
+                    <Image
+                      src={
+                        it.image?.startsWith("http")
+                          ? it.image
+                          : it.image
+                          ? `${process.env.NEXT_PUBLIC_SITE_URL}${it.image}`
+                          : "/placeholder.png"
+                      }
+                      alt={it.name || "Product Image"}
+                      fill
+                      className="rounded-xl object-cover"
+                    />
+                  </div>
+
                   <div className="flex-1">
                     <p className="font-medium">{it.name}</p>
                     <p className="text-sm text-gray-500">Qty: {it.quantity}</p>
@@ -149,12 +176,20 @@ export default function SuccessPage() {
 
           {/* ACTIONS */}
           <div className="grid sm:grid-cols-3 gap-4">
-            <button onClick={() => window.print()} className="flex items-center justify-center gap-2 px-6 py-3 border rounded-xl hover:bg-gray-100">
+            <button
+              onClick={() => window.print()}
+              className="flex items-center justify-center gap-2 px-6 py-3 border rounded-xl hover:bg-gray-100"
+            >
               <FileDown size={18} /> Download Invoice
             </button>
 
             <button
-              onClick={() => window.open(`https://wa.me/?text=My order ${order.orderNumber} has been placed successfully`, "_blank")}
+              onClick={() =>
+                window.open(
+                  `https://wa.me/?text=My order ${order.orderNumber} has been placed successfully`,
+                  "_blank"
+                )
+              }
               className="flex items-center justify-center gap-2 px-6 py-3 border rounded-xl hover:bg-gray-100"
             >
               <MessageCircle size={18} /> WhatsApp Confirmation
