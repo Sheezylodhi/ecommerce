@@ -1,9 +1,9 @@
-import {dbConnect} from "@/lib/db";
+import {connectDB} from "@/lib/db";
 import {Product} from "@/lib/models/Product";
 import { Order} from "@/lib/models/Order";
 
 export async function GET() {
-  await dbConnect();
+  await connectDB();
 
   try {
     const products = await Product.find({}).lean();
