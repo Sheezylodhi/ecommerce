@@ -33,14 +33,15 @@ export default function SuccessPage() {
           if (!res.ok) throw new Error(data.error);
           setOrder(data.order);
         } else if (orderId && isCod) {
-          const token = localStorage.getItem("token");
-          const res = await fetch(`/api/orders/${orderId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error);
-          setOrder(data.order || data);
-        } else {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`/api/orders/${orderId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error);
+  setOrder(data.order);
+}
+ else {
           throw new Error("Invalid success URL");
         }
       } catch (e) {

@@ -3,22 +3,28 @@ import { connectDB } from "@/lib/db";
 import { Order } from "@/lib/models/Order";
 import jwt from "jsonwebtoken";
 
-export async function GET(req, { params }) {
+export async function GET(req) {
   try {
     await connectDB();
 
+    const url = new URL(req.url);
+    const orderId = url.pathname.split("/").pop(); // extract last segment from /api/orders/<orderId>
     const auth = req.headers.get("authorization");
-    if (!auth) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    let decoded = null;
+
+    if (auth) {
+      const token = auth.split(" ")[1];
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
     }
 
-    const token = auth.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const order = await Order.findOne({
-      _id: params.id,
-      userId: decoded.id,
-    });
+    let order;
+    if (decoded) {
+      // logged-in user
+      order = await Order.findOne({ _id: orderId, userId: decoded.id });
+    } else {
+      // COD / guest
+      order = await Order.findOne({ _id: orderId, paymentMethod: "cod" });
+    }
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
