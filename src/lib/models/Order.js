@@ -1,0 +1,48 @@
+import mongoose from "mongoose";
+
+const OrderSchema = new mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    email: String,
+
+    items: [
+      {
+        productId: mongoose.Schema.Types.ObjectId,
+        name: String,
+        price: Number,
+        quantity: Number,
+        color: String,
+        size: String,
+
+        // ✅ THIS WAS MISSING
+        image: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+
+    totalAmount: Number,
+    orderNumber: String,
+    paymentStatus: { type: String, default: "pending" },
+    deliveryStatus: { type: String, default: "pending" },
+    stripeSessionId: String,
+
+    customerName: String,
+    phone: String,
+    address: String,
+    city: String,
+    country: String,
+
+    billingAddress: String,
+    billingCity: String,
+    billingCountry: String,
+
+    paymentMethod: { type: String, default: "card" },
+  },
+  { timestamps: true }
+);
+
+export const Order =
+  mongoose.models.Order || mongoose.model("Order", OrderSchema);
