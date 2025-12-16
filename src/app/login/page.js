@@ -55,7 +55,7 @@ export default function LoginPage() {
           <p className="text-gray-700 text-center mb-1">Login to your account</p>
 
           <p className="text-sm text-gray-600 text-center mb-4">
-            Don't have an account?{" "}
+            Dont have an account?{" "}
             <motion.span
               onClick={() => router.push("/signup")}
               className="relative text-black cursor-pointer"
