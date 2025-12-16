@@ -24,6 +24,7 @@
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.544.0",
+    "micro": "^10.0.1",
     "mongoose": "^8.18.3",
     "next": "15.5.4",
     "next-auth": "^4.24.13",
