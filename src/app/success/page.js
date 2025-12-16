@@ -1,8 +1,7 @@
-// SUCCESS PAGE WITH CONFETTI + INVOICE + DELIVERY ETA + WHATSAPP
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Confetti from "react-confetti";
 import Image from "next/image";
@@ -10,7 +9,6 @@ import { CheckCircle, FileDown, MessageCircle } from "lucide-react";
 
 export default function SuccessPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState(null);
   const [error, setError] = useState("");
@@ -18,9 +16,11 @@ export default function SuccessPage() {
 
   useEffect(() => {
     async function loadOrder() {
-      const session_id = searchParams.get("session_id");
-      const orderId = searchParams.get("orderId");
-      const isCod = searchParams.get("cod");
+      // CLIENT-SIDE URL PARAMS
+      const params = new URLSearchParams(window.location.search);
+      const session_id = params.get("session_id");
+      const orderId = params.get("orderId");
+      const isCod = params.get("cod");
 
       try {
         if (session_id) {
@@ -50,8 +50,9 @@ export default function SuccessPage() {
         setTimeout(() => setShowConfetti(false), 6000);
       }
     }
+
     loadOrder();
-  }, [searchParams]);
+  }, []);
 
   if (loading)
     return (
@@ -72,8 +73,6 @@ export default function SuccessPage() {
     );
 
   const items = order.items || [];
-
-  // DELIVERY ETA (3–5 DAYS)
   const etaDate = new Date();
   etaDate.setDate(etaDate.getDate() + 4);
 
@@ -86,7 +85,6 @@ export default function SuccessPage() {
         animate={{ opacity: 1, y: 0 }}
         className="max-w-6xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden"
       >
-        {/* HEADER */}
         <div className="bg-gradient-to-r from-black to-gray-800 text-white p-8">
           <div className="flex items-center gap-3">
             <CheckCircle className="text-green-400" size={32} />
@@ -100,24 +98,16 @@ export default function SuccessPage() {
         </div>
 
         <div className="p-6 md:p-8 space-y-10">
-          {/* DELIVERY ETA */}
           <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-green-700">
             Estimated Delivery by <b>{etaDate.toDateString()}</b>
           </div>
 
-          {/* CUSTOMER & PAYMENT */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="border rounded-2xl p-5">
               <h3 className="font-semibold mb-3 text-lg">Customer Details</h3>
-              <p>
-                <b>Name:</b> {order.customerName}
-              </p>
-              <p>
-                <b>Email:</b> {order.email}
-              </p>
-              <p>
-                <b>Phone:</b> {order.phone}
-              </p>
+              <p><b>Name:</b> {order.customerName}</p>
+              <p><b>Email:</b> {order.email}</p>
+              <p><b>Phone:</b> {order.phone}</p>
               <p className="text-sm text-gray-600">
                 <b>Address:</b> {order.address}, {order.city}, {order.country}
               </p>
@@ -126,27 +116,18 @@ export default function SuccessPage() {
             <div className="border rounded-2xl p-5">
               <h3 className="font-semibold mb-3 text-lg">Payment Summary</h3>
               <p>
-                <b>Method:</b>{" "}
-                {order.paymentMethod === "cod"
-                  ? "Cash on Delivery"
-                  : "Online (Stripe)"}
+                <b>Method:</b> {order.paymentMethod === "cod" ? "Cash on Delivery" : "Online (Stripe)"}
               </p>
-              <p>
-                <b>Status:</b> {order.paymentStatus}
-              </p>
+              <p><b>Status:</b> {order.paymentStatus}</p>
               <p className="text-xl font-bold mt-2">PKR {order.totalAmount}</p>
             </div>
           </div>
 
-          {/* ITEMS */}
           <div>
             <h3 className="font-semibold text-lg mb-5">Ordered Items</h3>
             <div className="space-y-4">
               {items.map((it, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col sm:flex-row gap-4 border rounded-2xl p-4"
-                >
+                <div key={i} className="flex flex-col sm:flex-row gap-4 border rounded-2xl p-4">
                   <div className="w-20 h-20 relative flex-shrink-0">
                     <Image
                       src={
@@ -174,7 +155,6 @@ export default function SuccessPage() {
             </div>
           </div>
 
-          {/* ACTIONS */}
           <div className="grid sm:grid-cols-3 gap-4">
             <button
               onClick={() => window.print()}
