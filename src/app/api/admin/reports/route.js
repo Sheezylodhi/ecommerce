@@ -1,6 +1,6 @@
-import dbConnect from "@/lib/db";
-import Product from "@/lib/models/Product";
-import Order from "@/lib/models/Order";
+import {dbConnect} from "@/lib/db";
+import {Product} from "@/lib/models/Product";
+import { Order} from "@/lib/models/Order";
 
 export async function GET() {
   await dbConnect();
