@@ -129,18 +129,10 @@ export default function SuccessPage() {
               {items.map((it, i) => (
                 <div key={i} className="flex flex-col sm:flex-row gap-4 border rounded-2xl p-4">
                   <div className="w-20 h-20 relative flex-shrink-0">
-                    <Image
-                      src={
-                        it.image?.startsWith("http")
-                          ? it.image
-                          : it.image
-                          ? `${process.env.NEXT_PUBLIC_SITE_URL}${it.image}`
-                          : "/placeholder.png"
-                      }
-                      alt={it.name || "Product Image"}
-                      fill
-                      className="rounded-xl object-cover"
-                    />
+                   <img
+src={it.image?.startsWith("http") ? it.image : it.image ? `${process.env.NEXT_PUBLIC_SITE_URL}${it.image}` : "/placeholder.png"}
+className="w-20 h-20 rounded-xl object-cover"
+/>
                   </div>
 
                   <div className="flex-1">
