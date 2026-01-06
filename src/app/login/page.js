@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { useUser } from "@/context/UserContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { signIn } from "next-auth/react";
+
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -114,8 +116,20 @@ export default function LoginPage() {
             </div>
           </form>
         </motion.div>
-      </div>
+        <div className="flex justify-center mb-6">
+  <motion.button
+    type="button"
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+    onClick={() => signIn("google", { callbackUrl: "/" })}
+    className="px-12 py-2.5 text-sm font-medium text-black border border-black"
+  >
+    Continue with Google
+  </motion.button>
+</div>
 
+      </div>
+         
       <Footer />
     </div>
   );

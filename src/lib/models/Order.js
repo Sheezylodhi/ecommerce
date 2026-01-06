@@ -2,9 +2,15 @@ import mongoose from "mongoose";
 
 const OrderSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-
-    email: String,
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    email: {
+  type: String,
+  required: true,
+},
 
     items: [
       {
@@ -14,12 +20,7 @@ const OrderSchema = new mongoose.Schema(
         quantity: Number,
         color: String,
         size: String,
-
-        // ✅ THIS WAS MISSING
-        image: {
-          type: String,
-          required: true,
-        },
+        image: { type: String, required: true },
       },
     ],
 

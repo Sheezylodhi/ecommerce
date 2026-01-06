@@ -21,6 +21,16 @@ export async function POST(req) {
     { new: true }
   );
 
+  if (!order) {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+
+  // ✅ Fix: Make sure order.email exists
+  const recipientEmail = order.email || session.customer_email;
+  if (!recipientEmail) {
+    return NextResponse.json({ error: "No email associated with this order" }, { status: 400 });
+  }
+
   const getImageUrl = (img) => {
     if (!img) return `${process.env.NEXT_PUBLIC_SITE_URL}/placeholder.png`;
     if (img.startsWith("http")) return img;
@@ -111,7 +121,7 @@ export async function POST(req) {
 
   await transporter.sendMail({
     from: `"Your Store" <${process.env.EMAIL_USER}>`,
-    to: order.email,
+    to: recipientEmail,
     subject: `Order Confirmed • #${order.orderNumber}`,
     html,
   });

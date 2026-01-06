@@ -197,7 +197,7 @@ export default function SubCategoryPage() {
       <div className="pt-28 px-4 sm:px-6 md:px-8 lg:px-12">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4 sm:gap-0">
           <h1 className="text-2xl sm:text-3xl tracking-wide font-thin uppercase text-black">
-            {main} / {middle} / {sub}
+           
           </h1>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">

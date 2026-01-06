@@ -1,15 +1,19 @@
-import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
 import { Address } from "@/lib/models/Address";
-import jwt from "jsonwebtoken";
 
-export async function GET(req) {
+export async function GET() {
   await connectDB();
-  const token = req.headers.get("authorization")?.split(" ")[1];
-  if (!token) return NextResponse.json({ addresses: [] });
+  const session = await getServerSession(authOptions);
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  if (!session) {
+    return Response.json({ addresses: [] }, { status: 401 });
+  }
 
-  const addresses = await Address.find({ userId: decoded.id });
-  return NextResponse.json({ addresses });
+  const addresses = await Address.find({
+    email: session.user.email, // ✅ MATCH
+  }).sort({ createdAt: -1 });
+
+  return Response.json({ addresses });
 }

@@ -5,6 +5,8 @@ import { Order } from "@/lib/models/Order";
 import { Product } from "@/lib/models/Product";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { getServerSession } from "next-auth/next"; // ✅ NextAuth session
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // your NextAuth config path
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -32,15 +34,27 @@ export async function POST(req) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
 
-    if (!token) {
+    // ✅ NextAuth session check
+    const session = await getServerSession(authOptions);
+    let userId;
+
+    if (session?.user?.email) {
+      userId = session.user.id; // Google login user ID
+    } else if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.id; // normal JWT login
+      } catch (err) {
+        return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      }
+    } else {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     const newOrder = await Order.create({
-      userId: decoded.id,
-      email,
+      user: session.user.id,
+      
+      email: session.user.email, 
       items: cart.map((item) => ({
         productId: item.productId,
         name: item.name,
@@ -48,7 +62,7 @@ export async function POST(req) {
         quantity: item.quantity,
         color: item.color,
         size: item.size,
-        image: item.image || "/placeholder.png"
+        image: item.image || "/placeholder.png",
       })),
       totalAmount: total,
       orderNumber: "ORD-" + Date.now(),
@@ -64,6 +78,7 @@ export async function POST(req) {
       paymentMethod,
     });
 
+    // ✅ Update product stock
     for (const item of cart) {
       await Product.updateOne(
         { _id: item.productId, "variants.color": item.color, "variants.sizes.size": item.size },
@@ -74,7 +89,7 @@ export async function POST(req) {
 
     // STRIPE PAYMENT
     if (paymentMethod === "card") {
-      const session = await stripe.checkout.sessions.create({
+      const sessionStripe = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "payment",
         line_items: cart.map((item) => ({
@@ -90,13 +105,13 @@ export async function POST(req) {
         metadata: { orderId: newOrder._id.toString() },
       });
 
-      newOrder.stripeSessionId = session.id;
+      newOrder.stripeSessionId = sessionStripe.id;
       await newOrder.save();
 
-      return NextResponse.json({ url: session.url });
+      return NextResponse.json({ url: sessionStripe.url });
     }
 
-    // COD EMAIL (Professional template)
+    // COD EMAIL
     if (paymentMethod === "cod") {
       const getImageUrl = (img) => {
         if (!img) return `${process.env.NEXT_PUBLIC_SITE_URL}/placeholder.png`;

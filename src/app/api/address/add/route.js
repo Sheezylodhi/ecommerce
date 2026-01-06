@@ -14,6 +14,7 @@ export async function POST(req) {
 
     await Address.create({
       userId: decoded.id,
+        email: session.user.email,
       ...body,
     });
 

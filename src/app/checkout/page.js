@@ -1,12 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 export default function CheckoutPage() {
-  
   const { cart, total, clearCart } = useCart();
+  const { data: session } = useSession(); // ✅ NextAuth session
+  const [token, setToken] = useState("");
+  
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -23,12 +26,28 @@ export default function CheckoutPage() {
   const [codSameAddress, setCodSameAddress] = useState(true);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    // Check for localStorage token (normal login)
+    const localToken = localStorage.getItem("token");
+    if (localToken) setToken(localToken);
+
+    // If NextAuth session exists (Google login)
+    if (session?.user?.email && !localToken) {
+      // You can request a JWT from your API if needed
+      setToken(session.user.id); // Example: Using user.id as token
+      setForm((prev) => ({
+        ...prev,
+        name: session.user.name,
+        email: session.user.email,
+      }));
+    }
+  }, [session]);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleCheckout = async () => {
-    const token = localStorage.getItem("token");
     if (!token) {
       alert("Please login first!");
       return;
@@ -52,7 +71,7 @@ export default function CheckoutPage() {
           billingAddress: codSameAddress ? form.address : form.billingAddress,
           billingCity: codSameAddress ? form.city : form.billingCity,
           billingCountry: codSameAddress ? form.country : form.billingCountry,
-          paymentMethod
+          paymentMethod,
         }),
       });
 
@@ -64,7 +83,7 @@ export default function CheckoutPage() {
         window.location.href = data.url;
       } else {
         clearCart();
-         window.location.href = `/success?orderId=${data.orderId}&cod=1`;
+        window.location.href = `/success?orderId=${data.orderId}&cod=1`;
         alert("Order placed successfully! Cash on Delivery selected.");
       }
     } catch (err) {
@@ -81,17 +100,18 @@ export default function CheckoutPage() {
         <div className="flex-1 text-center">
           <h1 className="text-2xl font-bold">My Shop</h1>
         </div>
-       <div className="flex items-center justify-end flex-1 relative">
-  <Link href="/cart" className="mr-8">
-    <ShoppingCart className="w-7 h-7 cursor-pointer" />
-  </Link>
-</div>
+        <div className="flex items-center justify-end flex-1 relative">
+          <Link href="/cart" className="mr-8">
+            <ShoppingCart className="w-7 h-7 cursor-pointer" />
+          </Link>
+        </div>
       </nav>
 
       <div className="max-w-6xl mx-auto p-6 lg:p-8 font-serif">
         <h1 className="text-3xl font-bold mb-10 text-left">Checkout</h1>
         <div className="flex flex-col lg:flex-row gap-8">
 
+          {/* LEFT FORM */}
           <div className="flex-1 space-y-6">
             <div className="flex justify-between items-center">
               <div className="w-full">
@@ -105,7 +125,7 @@ export default function CheckoutPage() {
                   className="w-full p-3 rounded-lg bg-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
               </div>
-              <Link href="/signin" className="text-indigo-600 hover:underline ml-4">Sign In</Link>
+              {!token && <Link href="/login" className="text-indigo-600 hover:underline ml-4">Sign In</Link>}
             </div>
 
             <div className="space-y-4">
@@ -122,6 +142,7 @@ export default function CheckoutPage() {
               ))}
             </div>
 
+            {/* PAYMENT */}
             <div className="mt-6 space-y-2">
               <h2 className="font-semibold text-lg">Payment Method</h2>
               <label className="flex items-center gap-2">
@@ -143,7 +164,6 @@ export default function CheckoutPage() {
                     <input type="radio" checked={!codSameAddress} onChange={() => setCodSameAddress(false)} className="accent-indigo-600"/>
                     Use different billing address
                   </label>
-
                   {!codSameAddress && (
                     <div className="space-y-2 mt-2">
                       {["billingAddress","billingCity","billingCountry"].map((field) => (
@@ -173,6 +193,7 @@ export default function CheckoutPage() {
             </div>
           </div>
 
+          {/* RIGHT SUMMARY */}
           <div className="w-full lg:w-1/2 bg-gradient-to-b from-gray-50 to-gray-100 p-6 rounded-lg shadow-lg space-y-6">
             <h2 className="text-2xl font-semibold mb-4">Order Summary</h2>
             {cart.length > 0 ? (

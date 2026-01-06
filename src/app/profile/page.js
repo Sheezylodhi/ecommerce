@@ -4,37 +4,41 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
+import { signOut } from "next-auth/react";
+
+import { useSession } from "next-auth/react";
 
 export default function ProfilePage() {
   const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [address, setAddress] = useState(null);
+const { data: session, status } = useSession();
+
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return router.push("/login");
+  if (status === "unauthenticated") {
+    router.push("/login");
+  }
+}, [status, router]);
 
-    // Fetch Orders
-    fetch("/api/orders/my-orders", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => res.json())
-      .then(data => setOrders(data.orders || []));
+ useEffect(() => {
+  if (status !== "authenticated") return;
 
-    // Fetch Address
-  fetch("/api/address/my", {
-  headers: { Authorization: `Bearer ${token}` },
-})
-  .then(res => res.json())
-  .then(data => {
-    if (data.addresses && data.addresses.length > 0) {
-      setAddress(data.addresses[0]); // 👈 first address
-    } else {
-      setAddress(null);
-    }
-  });
+  fetch("/api/orders/my-orders")
+    .then(res => res.json())
+    .then(data => setOrders(data.orders || []));
 
-  }, [router]);
+  fetch("/api/address/my")
+    .then(res => res.json())
+    .then(data => {
+      if (data.addresses?.length) {
+        setAddress(data.addresses[0]);
+      } else {
+        setAddress(null);
+      }
+    });
+}, [status]);
+
 
   return (
     <div className="min-h-screen font-serif bg-white flex flex-col">
@@ -45,10 +49,19 @@ export default function ProfilePage() {
         <h1 className="text-3xl font-semibold tracking-wide">My Account</h1>
 
         <button
-          onClick={() => {
-            localStorage.clear();
-            router.push("/login");
-          }}
+          onClick={async () => {
+  // 1️⃣ localStorage clear
+  localStorage.clear();
+
+  // 2️⃣ backend cookie clear
+  await fetch("/api/auth/logout", { method: "POST" });
+
+  // 3️⃣ NextAuth logout
+  await signOut({ redirect: false });
+
+  // 4️⃣ redirect
+  router.push("/");
+}}
           className="mt-4 text-sm text-gray-500 hover:text-black transition"
         >
           Log out

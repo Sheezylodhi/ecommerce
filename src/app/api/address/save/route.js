@@ -1,18 +1,24 @@
-import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
 import { Address } from "@/lib/models/Address";
-import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
 
 export async function POST(req) {
   await connectDB();
-  const token = req.headers.get("authorization")?.split(" ")[1];
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getServerSession(authOptions);
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
 
-  const newAddress = new Address({ ...body, userId: decoded.id });
-  await newAddress.save();
+  const newAddress = await Address.create({
+    ...body,
+    email: session.user.email, // 🔥 MUST
+  });
 
   return NextResponse.json({ success: true, address: newAddress });
 }
+

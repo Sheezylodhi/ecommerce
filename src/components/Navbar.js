@@ -6,11 +6,15 @@ import { ShoppingBag, User, Menu, X } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react"; // ✅ FIX
 
 export default function Navbar() {
   const router = useRouter();
-  const { user } = useUser();
+
+  const { user, login } = useUser(); // ✅ login bhi liya
   const { cart, setIsCartOpen } = useCart();
+
+  const { data: session, status } = useSession(); // ✅ NextAuth session
 
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -18,6 +22,20 @@ export default function Navbar() {
   const [activeMain, setActiveMain] = useState(null);
   const [activeMiddle, setActiveMiddle] = useState(null);
   const [categories, setCategories] = useState([]);
+
+  // 🔥 GOOGLE LOGIN → USER CONTEXT SYNC (MAIN FIX)
+  useEffect(() => {
+    if (status === "authenticated" && session?.user && !user) {
+      login(
+        {
+          id: session.user.id,
+          name: session.user.name,
+          email: session.user.email,
+        },
+        null
+      );
+    }
+  }, [status, session]);
 
   const handleTouchStart = (e) => setTouchStart(e.targetTouches[0].clientX);
   const handleTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
@@ -40,31 +58,36 @@ export default function Navbar() {
   }, []);
 
   const mainCategories = ["men", "women", "boys", "girls"];
+
   const getMiddle = (main) =>
-    [...new Set(
-      categories
-        .filter(c => c.mainCategory?.toLowerCase() === main)
-        .map(c => c.middleCategory)
-    )];
+    [
+      ...new Set(
+        categories
+          .filter((c) => c.mainCategory?.toLowerCase() === main)
+          .map((c) => c.middleCategory)
+      ),
+    ];
+
   const getSub = (main, middle) =>
     categories.filter(
-      c => c.mainCategory?.toLowerCase() === main && c.middleCategory === middle
+      (c) =>
+        c.mainCategory?.toLowerCase() === main &&
+        c.middleCategory === middle
     );
 
   return (
     <>
       {/* DESKTOP NAVBAR */}
       <nav className="fixed top-0 w-full bg-white h-[55px] border-b z-50 flex items-center px-4 md:px-10 font-serif">
-        
         {/* LEFT – DESKTOP ONLY */}
         <div className="hidden md:flex gap-10 text-sm uppercase">
-          {mainCategories.map(main => (
+          {mainCategories.map((main) => (
             <div key={main} className="relative group h-full flex items-center">
               <span className="cursor-pointer">{main}</span>
 
               <div className="absolute left-0 top-full w-screen bg-white shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto">
                 <div className="max-w-7xl mx-auto grid grid-cols-4 gap-10 px-10 py-10">
-                  {getMiddle(main).map(middle => (
+                  {getMiddle(main).map((middle) => (
                     <div key={middle}>
                       <Link
                         href={`/${main}/${middle.toLowerCase()}`}
@@ -74,10 +97,12 @@ export default function Navbar() {
                       </Link>
 
                       <div className="mt-3 space-y-2">
-                        {getSub(main, middle).map(sub => (
+                        {getSub(main, middle).map((sub) => (
                           <Link
                             key={sub._id}
-                            href={`/${main}/${middle.toLowerCase()}/${encodeURIComponent(sub.subcategory)}`}
+                            href={`/${main}/${middle.toLowerCase()}/${encodeURIComponent(
+                              sub.subcategory
+                            )}`}
                             className="block text-sm text-gray-700"
                           >
                             {sub.subcategory}
@@ -93,7 +118,10 @@ export default function Navbar() {
         </div>
 
         {/* MOBILE MENU ICON */}
-        <button className="md:hidden cursor-pointer" onClick={() => setMobileNav(true)}>
+        <button
+          className="md:hidden cursor-pointer"
+          onClick={() => setMobileNav(true)}
+        >
           <Menu size={20} />
         </button>
 
@@ -124,7 +152,6 @@ export default function Navbar() {
                 if (!user) router.push("/login");
                 else router.push("/profile");
               }}
-              className="cursor-pointer"
             >
               <User size={20} strokeWidth={1.5} />
             </button>
@@ -144,11 +171,9 @@ export default function Navbar() {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className="fixed inset-0 bg-black text-white z-[100] transform transition-transform duration-300 ease-in-out translate-x-0"
+            className="fixed inset-0 bg-black text-white z-[100]"
           >
             <div className="p-6 h-full overflow-y-auto relative">
-
-              {/* HEADER */}
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold tracking-wide">Menu</h2>
                 <button
@@ -162,11 +187,14 @@ export default function Navbar() {
                 </button>
               </div>
 
-              {/* LEVEL WRAPPER */}
               <div className="relative overflow-hidden">
-
-                {/* MAIN LEVEL */}
-                <div className={`transition-transform duration-300 ${activeMain ? "-translate-x-full absolute inset-0" : "translate-x-0"}`}>
+                <div
+                  className={`transition-transform duration-300 ${
+                    activeMain
+                      ? "-translate-x-full absolute inset-0"
+                      : "translate-x-0"
+                  }`}
+                >
                   {mainCategories.map((m) => (
                     <button
                       key={m}
@@ -179,9 +207,14 @@ export default function Navbar() {
                   ))}
                 </div>
 
-                {/* MIDDLE LEVEL */}
                 {activeMain && (
-                  <div className={`transition-transform duration-300 ${activeMiddle ? "-translate-x-full absolute inset-0" : "translate-x-0"}`}>
+                  <div
+                    className={`transition-transform duration-300 ${
+                      activeMiddle
+                        ? "-translate-x-full absolute inset-0"
+                        : "translate-x-0"
+                    }`}
+                  >
                     <button
                       onClick={() => setActiveMain(null)}
                       className="flex items-center gap-2 mb-4 text-sm opacity-80"
@@ -202,7 +235,6 @@ export default function Navbar() {
                   </div>
                 )}
 
-                {/* SUB LEVEL */}
                 {activeMain && activeMiddle && (
                   <div className="transition-transform duration-300 translate-x-0">
                     <button
@@ -215,7 +247,9 @@ export default function Navbar() {
                     {getSub(activeMain, activeMiddle).map((sub) => (
                       <Link
                         key={sub._id}
-                        href={`/${activeMain}/${activeMiddle.toLowerCase()}/${encodeURIComponent(sub.subcategory)}`}
+                        href={`/${activeMain}/${activeMiddle.toLowerCase()}/${encodeURIComponent(
+                          sub.subcategory
+                        )}`}
                         onClick={() => setMobileNav(false)}
                         className="block py-4 border-b border-white/20"
                       >

@@ -11,7 +11,12 @@ export async function POST(req) {
     const { email, password } = await req.json();
 
     const user = await User.findOne({ email });
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+if (!user) return NextResponse.json({ error: "User not found" });
+
+if (!user.password) {
+  return NextResponse.json({ error: "Please login with Google" });
+}
+
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });

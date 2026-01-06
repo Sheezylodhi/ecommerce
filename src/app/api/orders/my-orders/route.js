@@ -1,21 +1,19 @@
-  import { NextResponse } from "next/server";
-  import { connectDB } from "@/lib/db";
-  import { Order } from "@/lib/models/Order";
-  import jwt from "jsonwebtoken";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { connectDB } from "@/lib/db";
+import { Order } from "@/lib/models/Order";
 
-  export async function GET(req) {
-    try {
-      await connectDB();
-      const authHeader = req.headers.get("authorization");
-      if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET() {
+  await connectDB();
+  const session = await getServerSession(authOptions);
 
-      const token = authHeader.split(" ")[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      const orders = await Order.find({ userId: decoded.id }).sort({ createdAt: -1 });
-      return NextResponse.json({ orders });
-    } catch (err) {
-      console.error("My Orders Error:", err);
-      return NextResponse.json({ error: err.message }, { status: 500 });
-    }
+  if (!session) {
+    return Response.json({ orders: [] }, { status: 401 });
   }
+
+  const orders = await Order.find({
+    email: session.user.email, // ✅ MATCH GUARANTEED
+  }).sort({ createdAt: -1 });
+
+  return Response.json({ orders });
+}
